@@ -1,0 +1,8 @@
+# Ambiente virtual do Python
+.venv/
+
+# Cache do Python
+__pycache__/
+
+# Banco de dados gerado pelos scripts
+data/*.db
