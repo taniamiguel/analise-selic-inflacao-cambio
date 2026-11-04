@@ -32,7 +32,10 @@ SELECT MIN(data) AS inicio,
 FROM selic_meta
 WHERE valor = 2.0;
 
---- Selic Mínima, Média, Máxima por ano
+-- Selic Mínima, Média, Máxima por ano
+-- Selic Minima ano de 2020, 2.0
+-- Selic Maxima ano de 2026, 14.43
+-- Nenhum ano a min e max foram iguais 
 SELECT strftime('%Y', data)  AS ano,
        ROUND(AVG(valor), 2)  AS selic_media,
        MIN(valor)            AS minima,
