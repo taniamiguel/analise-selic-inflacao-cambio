@@ -31,3 +31,13 @@ SELECT MIN(data) AS inicio,
        COUNT(*)  AS dias
 FROM selic_meta
 WHERE valor = 2.0;
+
+--- Selic Mínima, Média, Máxima por ano
+SELECT strftime('%Y', data)  AS ano,
+       ROUND(AVG(valor), 2)  AS selic_media,
+       MIN(valor)            AS minima,
+       MAX(valor)            AS maxima,
+       COUNT(*)              AS dias
+FROM selic_meta
+GROUP BY ano
+ORDER BY ano;
