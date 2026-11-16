@@ -2,7 +2,8 @@ import sqlite3
 
 import pandas as pd
 
-SERIES = ["selic_meta", "ipca_mensal", "ipca_12m", "dolar_medio_mensal"]
+SERIES = ["selic_meta", "ipca_mensal", "ipca_12m", "dolar_medio_mensal",
+          "cdi_mensal", "poupanca", "imoveis_ivgr"]
 
 conexao = sqlite3.connect("data/macro.db")
 
