@@ -4,6 +4,8 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 PASTA_RAW = RAIZ / "data" / "raw"
 CAMINHO_BANCO = RAIZ / "data" / "macro.db"
+PASTA_SQL = RAIZ / "sql"
+PASTA_PROCESSED = RAIZ / "data" / "processed"
 
 # Código da série no SGS do Banco Central -> nome do CSV e da tabela no banco
 SERIES = {
