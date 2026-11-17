@@ -8,7 +8,9 @@ from config import CAMINHO_BANCO, PASTA_PROCESSED, PASTA_SQL
 EXPORTACOES = {
     "07_indicadores_mensais.sql": "indicadores_mensais.csv",
     "06_ranking_investimentos.sql": "ranking_investimentos.csv",
-}
+    "08_evolucao_100_reais.sql": "evolucao_100_reais.csv",
+    
+}  
 
 
 def main():
