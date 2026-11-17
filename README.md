@@ -21,7 +21,7 @@ Todas as séries vêm do [SGS – Sistema Gerenciador de Séries Temporais](http
 | `ipca_12m`           | 13522      | Mensal        | IPCA – acumulado em 12 meses (%)            |
 | `dolar_medio_mensal` | 3698       | Mensal        | Dólar comercial, média do mês (R$)          |
 | `cdi_mensal`         | 4391       | Mensal        | CDI acumulado no mês (%)                    |
-| `poupanca`           | 195        | Diária        | Rendimento da poupança, regra nova (desde 05/2012) |
+| `poupanca`           | 195        | Diária        | Rendimento da poupança, regra nova (desde maio de 2012) |
 | `imoveis_ivgr`       | 21340      | Mensal        | Índice de valores de garantia de imóveis residenciais |
 
 ## Como rodar
@@ -50,10 +50,10 @@ exploracao/   scripts de teste e rascunhos
 
 ## Principais conclusões até agora
 
-- **Selic:** a mínima histórica de 2% durou de 06/08/2020 a 17/03/2021 (224 dias); a máxima do
-  período, 15%, durou de 19/06/2025 a 18/03/2026 (273 dias).
+- **Selic:** a mínima histórica de 2% durou de 6 de agosto de 2020 a 17 de março de 2021 (224 dias); a máxima do
+  período, 15%, durou de 19 de junho de 2025 a 18 de março de 2026 (273 dias).
 - **Juro real negativo por 22 meses seguidos** entre 2020 e 2022: a Selic na mínima durante a pandemia
-  coincidiu com a alta da inflação. Pelo CDI acumulado em 12 meses, o período foi de out/2020 a jul/2022.
+  coincidiu com a alta da inflação. Pelo CDI acumulado em 12 meses, o período foi de outubro de 2020 a julho de 2022.
 - **Dólar:** 2015 teve a maior alta da média anual (+41,6% sobre 2014) e 2020 foi o ano mais instável
   (diferença de R$ 1,49 entre o maior e o menor mês). Em 2022 e 2023, com a Selic alta atraindo
   capital estrangeiro, a média anual do dólar caiu (-4,3% e -3,3%).
