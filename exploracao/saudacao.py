@@ -1,0 +1,1 @@
+print("O __name__ deste arquivo vale:", __name__)
