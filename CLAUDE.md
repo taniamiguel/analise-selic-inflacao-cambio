@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Visão geral
 
-Projeto de análise de dados (Python + SQL + Power BI) com séries macroeconômicas do Banco Central do Brasil: Selic, IPCA, dólar, CDI, poupança e preços de imóveis. Ainda em construção — a etapa de Power BI ainda não existe no repositório. Código, comentários, nomes de variáveis e mensagens de commit são escritos em português.
+Projeto de análise de dados (Python + SQL + Power BI) com séries macroeconômicas do Banco Central do Brasil: Selic, IPCA, dólar, CDI, poupança e preços de imóveis. O painel do Power BI fica em `powerbi/` e lê os CSVs de `data/processed/`. Código, comentários, nomes de variáveis e mensagens de commit são escritos em português.
 
 ## Comandos
 
@@ -14,6 +14,7 @@ Os caminhos são resolvidos a partir de `src/config.py`, então os scripts podem
 pip install -r requirements.txt     # pandas e requests (ambiente virtual em .venv/)
 python src/coletar_dados.py         # baixa as séries da API do BCB -> data/raw/*.csv
 python src/carregar_banco.py        # carrega os CSVs no SQLite -> data/macro.db
+python src/exportar_powerbi.py      # roda sql/06, 07 e 08 -> data/processed/*.csv (separador ';', decimal ',')
 ```
 
 O `sqlite3` de linha de comando não está instalado nesta máquina. Para rodar SQL, use Python (`sqlite3.connect("data/macro.db")`, que tem SQLite 3.50, com funções matemáticas e window functions) ou um cliente gráfico. A pasta `exploracao/` guarda rascunhos que não fazem parte do pipeline. Não há testes automatizados nem linter configurados.
@@ -27,6 +28,7 @@ O `sqlite3` de linha de comando não está instalado nesta máquina. Para rodar 
    - Cada período tem até `TENTATIVAS` tentativas. Se algum período falhar de vez, a série inteira é pulada e o CSV anterior é mantido, para nunca gravar uma série incompleta.
 3. **Carga (`src/carregar_banco.py`)** — cada CSV vira uma tabela (`if_exists="replace"`). As colunas listadas em `COLUNAS_DE_DATA` (`data`, `dataFim`) são convertidas de `DD/MM/AAAA` para `AAAA-MM-DD` (ISO), o que permite usar `strftime('%Y', data)` e comparar datas como texto no SQLite.
 4. **Análise (`sql/`)** — consultas numeradas e independentes, escritas em SQLite. Os resultados encontrados ficam registrados como comentários acima de cada consulta e as principais conclusões estão resumidas no `README.md`. Ao mudar uma consulta, confira os números no banco antes de atualizar esses comentários.
+5. **Exportação (`src/exportar_powerbi.py`)** — o dicionário `EXPORTACOES` liga cada arquivo SQL a um CSV em `data/processed/`. Os CSVs usam `sep=";"`, `decimal=","` e `utf-8-sig`, para o Power BI em português ler os números e acentos corretamente.
 
 ## Formato das tabelas
 
