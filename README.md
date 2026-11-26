@@ -12,6 +12,17 @@ O projeto responde a duas perguntas, em duas partes:
 2. **O impacto no bolso:** nesse cenário, onde R$ 100 aplicados em junho de 2012 renderam mais do
    que a inflação: CDI, poupança, dólar, imóveis ou dinheiro parado?
 
+## Dashboard interativo (abre no navegador)
+
+**[Abrir o dashboard](https://taniamiguel.github.io/analise-selic-inflacao-cambio/)** – a mesma análise do
+Power BI em uma página web, sem precisar instalar nada: filtro por período, valores ao passar o mouse,
+tabelas com os dados e modo escuro. Funciona também no celular.
+
+Nas cores, o dashboard usa **azul para "a favor do seu dinheiro"** e **vermelho para "contra"**, em vez
+de verde e vermelho como no Power BI: a dupla verde e vermelho é a mais difícil de distinguir para
+pessoas com daltonismo. A paleta foi conferida com um verificador de daltonismo, e todos os valores
+também estão disponíveis em tabelas, para que nenhuma informação dependa só da cor.
+
 ## Painel (Power BI)
 
 **Página 1 – Cenário:** Selic × inflação, juro real, dólar mensal e variação anual do dólar.
@@ -48,6 +59,7 @@ pip install -r requirements.txt
 python src/coletar_dados.py       # baixa as séries da API -> data/raw/*.csv
 python src/carregar_banco.py      # carrega os CSVs no SQLite -> data/macro.db
 python src/exportar_powerbi.py    # gera as tabelas do painel -> data/processed/*.csv
+python src/gerar_dashboard.py     # gera o dashboard interativo -> docs/index.html
 ```
 
 As consultas da pasta `sql/` podem ser executadas em qualquer cliente SQLite (DB Browser for SQLite,
@@ -56,7 +68,7 @@ extensão SQLite do VS Code etc.) apontando para `data/macro.db`.
 ## Estrutura
 
 ```
-src/            coleta (API do BCB), carga no SQLite e exportação para o Power BI;
+src/            coleta (API do BCB), carga no SQLite, exportação para o Power BI e dashboard HTML;
                 config.py lista as séries e os caminhos
 sql/            consultas de análise, numeradas, com os resultados comentados
                 (07 e 08 geram as tabelas do painel)
@@ -64,6 +76,8 @@ data/raw/       CSVs brutos baixados da API (versionados)
 data/processed/ CSVs tratados que alimentam o Power BI (versionados)
 data/macro.db   banco SQLite gerado pela carga (não versionado)
 powerbi/        arquivo do painel (.pbix)
+docs/           dashboard interativo em HTML, publicado pelo GitHub Pages
+                (gerado a partir de src/dashboard_template.html)
 images/         prints do painel usados neste README
 exploracao/     scripts de teste e rascunhos
 ```

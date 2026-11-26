@@ -15,6 +15,7 @@ pip install -r requirements.txt     # pandas e requests (ambiente virtual em .ve
 python src/coletar_dados.py         # baixa as séries da API do BCB -> data/raw/*.csv
 python src/carregar_banco.py        # carrega os CSVs no SQLite -> data/macro.db
 python src/exportar_powerbi.py      # roda sql/06, 07 e 08 -> data/processed/*.csv (separador ';', decimal ',')
+python src/gerar_dashboard.py       # data/processed/*.csv -> docs/index.html (dashboard HTML)
 ```
 
 O `sqlite3` de linha de comando não está instalado nesta máquina. Para rodar SQL, use Python (`sqlite3.connect("data/macro.db")`, que tem SQLite 3.50, com funções matemáticas e window functions) ou um cliente gráfico. A pasta `exploracao/` guarda rascunhos que não fazem parte do pipeline. Não há testes automatizados nem linter configurados.
@@ -29,6 +30,7 @@ O `sqlite3` de linha de comando não está instalado nesta máquina. Para rodar 
 3. **Carga (`src/carregar_banco.py`)** — cada CSV vira uma tabela (`if_exists="replace"`). As colunas listadas em `COLUNAS_DE_DATA` (`data`, `dataFim`) são convertidas de `DD/MM/AAAA` para `AAAA-MM-DD` (ISO), o que permite usar `strftime('%Y', data)` e comparar datas como texto no SQLite.
 4. **Análise (`sql/`)** — consultas numeradas e independentes, escritas em SQLite. Os resultados encontrados ficam registrados como comentários acima de cada consulta e as principais conclusões estão resumidas no `README.md`. Ao mudar uma consulta, confira os números no banco antes de atualizar esses comentários.
 5. **Exportação (`src/exportar_powerbi.py`)** — o dicionário `EXPORTACOES` liga cada arquivo SQL a um CSV em `data/processed/`. Os CSVs usam `sep=";"`, `decimal=","` e `utf-8-sig`, para o Power BI em português ler os números e acentos corretamente.
+6. **Dashboard HTML (`src/gerar_dashboard.py`)** — injeta os três CSVs de `data/processed/` como JSON no lugar de `__DADOS__` em `src/dashboard_template.html` e grava `docs/index.html` (publicado pelo GitHub Pages). Edite sempre o modelo, nunca o `docs/index.html`. Os gráficos usam Plotly via CDN.
 
 ## Formato das tabelas
 

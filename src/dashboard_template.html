@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Selic, inflação e câmbio no Brasil</title>
+<meta name="description" content="Dashboard interativo: juros, inflação e dólar no Brasil desde 2010, e onde R$ 100 renderam mais. Dados do Banco Central.">
+<!-- Este arquivo é gerado por src/gerar_dashboard.py a partir de src/dashboard_template.html. Edite o modelo, não este arquivo. -->
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f9;
+    --surface: #ffffff;
+    --text-primary: #191919;
+    --text-secondary: #666666;
+    --grid: #e7e7e7;
+    --axis: #c2c2c2;
+    --border: rgba(11, 11, 11, 0.10);
+    --accent: #257de0;
+    --series-1: #257de0;  /* azul    */
+    --series-2: #f47230;  /* laranja */
+    --series-3: #00b894;  /* verde-água */
+    --series-4: #f2a600;  /* amarelo */
+    --series-5: #ee7fac;  /* magenta */
+    --reference: #666666; /* inflação: a régua */
+    --favor: #257de0;     /* a favor do seu dinheiro */
+    --contra: #ec4647;    /* contra o seu dinheiro   */
+    --neutral: #9c9c9c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0b0b0b;
+      --surface: #191919;
+      --text-primary: #efefef;
+      --text-secondary: #9c9c9c;
+      --grid: #303030;
+      --axis: #474747;
+      --border: rgba(255, 255, 255, 0.10);
+      --accent: #338ced;
+      --series-1: #338ced;
+      --series-2: #e76624;
+      --series-3: #00a888;
+      --series-4: #d28e05;
+      --series-5: #e24d8b;
+      --reference: #9c9c9c;
+      --favor: #338ced;
+      --contra: #eb6263;
+      --neutral: #6b6b6b;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0b0b0b;
+    --surface: #191919;
+    --text-primary: #efefef;
+    --text-secondary: #9c9c9c;
+    --grid: #303030;
+    --axis: #474747;
+    --border: rgba(255, 255, 255, 0.10);
+    --accent: #338ced;
+    --series-1: #338ced;
+    --series-2: #e76624;
+    --series-3: #00a888;
+    --series-4: #d28e05;
+    --series-5: #e24d8b;
+    --reference: #9c9c9c;
+    --favor: #338ced;
+    --contra: #eb6263;
+    --neutral: #6b6b6b;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+
+  header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-start; justify-content: space-between; }
+  h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 4px; }
+  .subtitle { color: var(--text-secondary); margin: 0; font-size: 0.95rem; }
+  .subtitle a { color: inherit; }
+  .theme-btn {
+    background: var(--surface); color: var(--text-primary);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 12px; font: inherit; font-size: 0.9rem; cursor: pointer;
+  }
+
+  .tabs { display: flex; gap: 4px; margin: 24px 0 16px; border-bottom: 1px solid var(--border); }
+  .tab {
+    background: none; border: none; font: inherit; font-weight: 600;
+    color: var(--text-secondary); padding: 10px 14px; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .tab[aria-selected="true"] { color: var(--text-primary); border-bottom-color: var(--accent); }
+  .tab:focus-visible, .theme-btn:focus-visible, select:focus-visible, .seg button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  .intro { color: var(--text-secondary); margin: 0 0 16px; max-width: 75ch; }
+
+  .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 16px; font-size: 0.95rem; }
+  .filters label { color: var(--text-secondary); }
+  select {
+    font: inherit; color: var(--text-primary); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px;
+  }
+  .link-btn { background: none; border: none; color: var(--accent); font: inherit; cursor: pointer; padding: 6px 4px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .kpi .label { color: var(--text-secondary); font-size: 0.9rem; }
+  .kpi .value { font-size: 2rem; font-weight: 650; line-height: 1.2; margin-top: 4px; }
+  .kpi .note { color: var(--text-secondary); font-size: 0.82rem; margin-top: 4px; }
+
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: 0; }
+  .card.wide { grid-column: 1 / -1; }
+  .card h2 { font-size: 1.02rem; margin: 0; }
+  .card .card-sub { color: var(--text-secondary); font-size: 0.85rem; margin: 2px 0 8px; }
+  .card-head { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; align-items: flex-start; }
+  .chart { width: 100%; height: 320px; }
+  .chart.tall { height: 420px; }
+
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg button {
+    background: var(--surface); color: var(--text-secondary); border: none;
+    font: inherit; font-size: 0.85rem; padding: 6px 10px; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #ffffff; }
+
+  details { margin-top: 12px; }
+  summary { cursor: pointer; color: var(--accent); font-size: 0.92rem; }
+  .table-wrap { overflow-x: auto; max-height: 360px; margin-top: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-secondary); font-weight: 600; position: sticky; top: 0; background: var(--surface); }
+
+  .callout { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-top: 12px; font-size: 0.92rem; }
+  .callout h3 { font-size: 0.95rem; margin: 0 0 6px; }
+  .callout ul { margin: 0; padding-left: 20px; color: var(--text-secondary); }
+
+  footer { margin-top: 32px; color: var(--text-secondary); font-size: 0.85rem; }
+  footer a { color: inherit; }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 760px) {
+    .grid { grid-template-columns: minmax(0, 1fr); }
+    h1 { font-size: 1.35rem; }
+    .kpi .value { font-size: 1.6rem; }
+    .chart { height: 280px; }
+    .chart.tall { height: 380px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Selic, inflação e câmbio no Brasil</h1>
+      <p class="subtitle">
+        Dados do Banco Central do Brasil (SGS) · Python, SQL e Power BI ·
+        <a href="https://github.com/taniamiguel/analise-selic-inflacao-cambio">ver o projeto no GitHub</a>
+      </p>
+    </div>
+    <button class="theme-btn" id="tema" type="button">Alternar tema</button>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Páginas do dashboard">
+    <button class="tab" role="tab" id="tab-cenario" aria-controls="painel-cenario" aria-selected="true">Cenário</button>
+    <button class="tab" role="tab" id="tab-dinheiro" aria-controls="painel-dinheiro" aria-selected="false" tabindex="-1">Seu dinheiro</button>
+  </nav>
+
+  <!-- ===================== PÁGINA 1: CENÁRIO ===================== -->
+  <section id="painel-cenario" role="tabpanel" aria-labelledby="tab-cenario">
+    <p class="intro">Como os juros, a inflação e o dólar se comportaram desde 2010. Passe o mouse sobre os gráficos para ver os valores de cada mês.</p>
+
+    <div class="filters">
+      <label for="ano-inicio">Período: de</label>
+      <select id="ano-inicio"></select>
+      <label for="ano-fim">até</label>
+      <select id="ano-fim"></select>
+      <button class="link-btn" id="restaurar" type="button">Ver tudo</button>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="label">Selic mínima</div><div class="value" id="kpi-selic-min">–</div><div class="note">% ao ano</div></div>
+      <div class="kpi"><div class="label">Selic máxima</div><div class="value" id="kpi-selic-max">–</div><div class="note">% ao ano</div></div>
+      <div class="kpi"><div class="label">Selic média</div><div class="value" id="kpi-selic-media">–</div><div class="note">% ao ano</div></div>
+      <div class="kpi"><div class="label">Meses de juro real negativo</div><div class="value" id="kpi-juro-neg">–</div><div class="note" id="kpi-juro-neg-nota">Selic abaixo da inflação</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Selic × inflação</h2>
+        <p class="card-sub">% ao ano. Quando a Selic fica abaixo da inflação, o juro real é negativo.</p>
+        <div class="chart" id="graf-selic-ipca" role="img" aria-label="Gráfico de linhas da Selic e da inflação em 12 meses"></div>
+      </div>
+      <div class="card">
+        <h2>Juro real</h2>
+        <p class="card-sub">Quanto a Selic rendeu acima da inflação, em %. Azul: acima; vermelho: abaixo.</p>
+        <div class="chart" id="graf-juro-real" role="img" aria-label="Gráfico de colunas do juro real mês a mês"></div>
+      </div>
+      <div class="card">
+        <h2>Dólar médio mensal</h2>
+        <p class="card-sub">R$ por US$, média de cada mês.</p>
+        <div class="chart" id="graf-dolar" role="img" aria-label="Gráfico de linha do dólar médio mensal"></div>
+      </div>
+      <div class="card">
+        <h2>Variação anual do dólar médio</h2>
+        <p class="card-sub">Comparação com a média do ano anterior. Vermelho: o dólar subiu (o real perdeu valor).</p>
+        <div class="chart" id="graf-variacao-dolar" role="img" aria-label="Gráfico de colunas da variação anual do dólar"></div>
+      </div>
+    </div>
+
+    <details>
+      <summary>Ver os dados do período em tabela</summary>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mês</th><th>Selic (% a.a.)</th><th>IPCA 12 meses (%)</th><th>Juro real (%)</th><th>Dólar (R$)</th></tr></thead>
+          <tbody id="tabela-indicadores"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===================== PÁGINA 2: SEU DINHEIRO ===================== -->
+  <section id="painel-dinheiro" role="tabpanel" aria-labelledby="tab-dinheiro" hidden>
+    <p class="intro">Se você tivesse aplicado R$ 100 em <strong>junho de 2012</strong>, quanto teria em <strong>setembro de 2026</strong>? O período é fixo: é o único em que todas as séries têm dados completos.</p>
+
+    <div class="kpis" id="kpis-dinheiro"></div>
+
+    <div class="grid">
+      <div class="card wide">
+        <h2>Quanto R$ 100 viraram</h2>
+        <p class="card-sub">Azul: ganhou da inflação. Vermelho: perdeu. Cinza: a própria inflação, a referência.</p>
+        <div class="chart" id="graf-ranking" role="img" aria-label="Gráfico de barras com o valor final de cada investimento"></div>
+        <details>
+          <summary>Ver o ranking em tabela</summary>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Investimento</th><th>Posição</th><th>R$ 100 viraram</th><th>Ganho real (%)</th></tr></thead>
+              <tbody id="tabela-ranking"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+
+      <div class="card wide">
+        <div class="card-head">
+          <div>
+            <h2 id="titulo-evolucao">Poder de compra de R$ 100 ao longo do tempo</h2>
+            <p class="card-sub" id="sub-evolucao">Em reais de maio de 2012, já descontada a inflação. Acima da linha cinza, o investimento ganhou da inflação.</p>
+          </div>
+          <div class="seg" role="group" aria-label="Como mostrar os valores">
+            <button type="button" id="modo-real" aria-pressed="true">Descontada a inflação</button>
+            <button type="button" id="modo-nominal" aria-pressed="false">Em reais da época</button>
+          </div>
+        </div>
+        <div class="chart tall" id="graf-evolucao" role="img" aria-label="Gráfico de linhas com a evolução de R$ 100 em cada investimento"></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h3>Limitações</h3>
+      <ul>
+        <li>Valores brutos, sem Imposto de Renda nem taxas (a poupança é isenta de IR; o CDI, não).</li>
+        <li>O índice de imóveis (IVG-R) mede só o preço, sem a renda de aluguel, e é uma média nacional.</li>
+        <li>O dólar usa a média mensal, não a cotação de um dia específico.</li>
+        <li>É uma análise histórica: o passado não garante resultados futuros, e não é recomendação de investimento.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <p>Projeto de portfólio de Tania · Fonte: <a href="https://www3.bcb.gov.br/sgspub/">Banco Central do Brasil, SGS</a> (séries 432, 433, 13522, 3698, 4391, 195 e 21340) · <span id="atualizacao"></span></p>
+  </footer>
+</div>
+
+<script>
+const DADOS = __DADOS__;
+
+// ---------- Utilidades ----------
+const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const num = (v, casas = 2) => v == null ? "–" : v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+const mesAno = (iso) => `${MESES[Number(iso.slice(5, 7)) - 1]}/${iso.slice(0, 4)}`;
+const ano = (iso) => Number(iso.slice(0, 4));
+const cor = (nome) => getComputedStyle(document.documentElement).getPropertyValue(nome).trim();
+const sinal = (v, casas = 1) => (v > 0 ? "+" : "") + num(v, casas);
+
+const CONFIG_PLOTLY = { displayModeBar: false, responsive: true };
+
+function layoutBase(extra = {}) {
+  const texto = cor("--text-secondary");
+  const eixo = {
+    gridcolor: cor("--grid"), linecolor: cor("--axis"), zerolinecolor: cor("--axis"),
+    tickfont: { color: texto, size: 11 }, title: { font: { color: texto, size: 11 } },
+  };
+  return {
+    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: 'system-ui, -apple-system, "Segoe UI", sans-serif', color: cor("--text-primary"), size: 12 },
+    separators: ",.",
+    margin: { l: 44, r: 16, t: 8, b: 36 },
+    showlegend: false,
+    hoverlabel: { bgcolor: cor("--surface"), bordercolor: cor("--axis"), font: { color: cor("--text-primary") } },
+    ...extra,
+    xaxis: { ...eixo, ...(extra.xaxis || {}) },
+    yaxis: { ...eixo, ...(extra.yaxis || {}) },
+  };
+}
+
+function preencherTabela(idCorpo, linhas) {
+  // textContent (e não innerHTML) para inserir os textos com segurança
+  const corpo = document.getElementById(idCorpo);
+  corpo.replaceChildren();
+  for (const celulas of linhas) {
+    const tr = document.createElement("tr");
+    for (const valor of celulas) {
+      const td = document.createElement("td");
+      td.textContent = valor;
+      tr.appendChild(td);
+    }
+    corpo.appendChild(tr);
+  }
+}
+
+// ---------- Página 1: Cenário ----------
+const indicadores = DADOS.indicadores;
+const anos = [...new Set(indicadores.map((l) => ano(l.mes)))];
+const selInicio = document.getElementById("ano-inicio");
+const selFim = document.getElementById("ano-fim");
+for (const a of anos) {
+  selInicio.add(new Option(a, a));
+  selFim.add(new Option(a, a));
+}
+selInicio.value = anos[0];
+selFim.value = anos[anos.length - 1];
+
+// Variação anual do dólar: média de cada ano comparada com a do ano anterior (sempre com todos os dados)
+const dolarPorAno = {};
+for (const l of indicadores) {
+  if (l.dolar == null) continue;
+  (dolarPorAno[ano(l.mes)] ||= []).push(l.dolar);
+}
+const ultimoAno = anos[anos.length - 1];
+const mesesUltimoAno = (dolarPorAno[ultimoAno] || []).length;
+const variacaoDolar = anos.slice(1).map((a) => {
+  const media = (lista) => lista.reduce((s, v) => s + v, 0) / lista.length;
+  const atual = media(dolarPorAno[a]);
+  const anterior = media(dolarPorAno[a - 1]);
+  return { ano: a, media: atual, variacao: (atual / anterior - 1) * 100 };
+});
+
+function desenharCenario() {
+  let inicio = Number(selInicio.value);
+  let fim = Number(selFim.value);
+  if (inicio > fim) { [inicio, fim] = [fim, inicio]; selInicio.value = inicio; selFim.value = fim; }
+  const linhas = indicadores.filter((l) => ano(l.mes) >= inicio && ano(l.mes) <= fim);
+  const x = linhas.map((l) => l.mes);
+  const rotulos = linhas.map((l) => mesAno(l.mes));
+
+  // Cartões
+  const selic = linhas.map((l) => l.selic).filter((v) => v != null);
+  document.getElementById("kpi-selic-min").textContent = num(Math.min(...selic));
+  document.getElementById("kpi-selic-max").textContent = num(Math.max(...selic));
+  document.getElementById("kpi-selic-media").textContent = num(selic.reduce((s, v) => s + v, 0) / selic.length);
+  const negativos = linhas.filter((l) => l.juro_real != null && l.juro_real < 0).length;
+  document.getElementById("kpi-juro-neg").textContent = negativos;
+  document.getElementById("kpi-juro-neg-nota").textContent = `de ${linhas.length} meses no período`;
+
+  // Selic × inflação: as duas na MESMA escala
+  Plotly.react("graf-selic-ipca", [
+    { x, y: linhas.map((l) => l.selic), name: "Selic", type: "scatter", mode: "lines",
+      line: { color: cor("--series-1"), width: 2 }, customdata: rotulos,
+      hovertemplate: "%{y:.2f}%<extra>Selic</extra>" },
+    { x, y: linhas.map((l) => l.ipca_12m), name: "Inflação (IPCA 12 meses)", type: "scatter", mode: "lines",
+      line: { color: cor("--series-2"), width: 2 }, customdata: rotulos,
+      hovertemplate: "%{y:.2f}%<extra>Inflação 12m</extra>" },
+  ], layoutBase({
+    hovermode: "x unified", showlegend: true,
+    legend: { orientation: "h", y: -0.18, font: { color: cor("--text-secondary"), size: 11 } },
+    margin: { l: 44, r: 16, t: 8, b: 56 },
+    xaxis: { type: "date", hoverformat: "%m/%Y", showspikes: true, spikemode: "across", spikethickness: 1, spikecolor: cor("--axis"), spikedash: "solid" },
+    yaxis: { ticksuffix: "%", rangemode: "tozero" },
+  }), CONFIG_PLOTLY);
+
+  // Juro real: azul acima de zero, vermelho abaixo
+  const juro = linhas.map((l) => l.juro_real);
+  Plotly.react("graf-juro-real", [{
+    x, y: juro, type: "bar", customdata: rotulos,
+    marker: { color: juro.map((v) => (v < 0 ? cor("--contra") : cor("--favor"))) },
+    hovertemplate: "%{customdata}<br><b>%{y:.2f}%</b><extra></extra>",
+  }], layoutBase({
+    bargap: 0.15,
+    xaxis: { type: "date" },
+    yaxis: { ticksuffix: "%", zeroline: true, zerolinewidth: 1 },
+  }), CONFIG_PLOTLY);
+
+  // Dólar
+  Plotly.react("graf-dolar", [{
+    x, y: linhas.map((l) => l.dolar), type: "scatter", mode: "lines",
+    line: { color: cor("--series-1"), width: 2 }, customdata: rotulos,
+    hovertemplate: "%{customdata}<br><b>R$ %{y:.4f}</b><extra></extra>",
+  }], layoutBase({
+    hovermode: "closest",
+    xaxis: { type: "date", showspikes: true, spikemode: "across", spikethickness: 1, spikecolor: cor("--axis"), spikedash: "solid" },
+    yaxis: { tickprefix: "R$ ", rangemode: "tozero" },
+  }), CONFIG_PLOTLY);
+
+  // Variação anual do dólar: vermelho quando sobe, azul quando cai
+  const variacoes = variacaoDolar.filter((v) => v.ano >= inicio && v.ano <= fim);
+  Plotly.react("graf-variacao-dolar", [{
+    x: variacoes.map((v) => String(v.ano)), y: variacoes.map((v) => v.variacao), type: "bar",
+    marker: { color: variacoes.map((v) => (v.variacao > 0 ? cor("--contra") : cor("--favor"))) },
+    customdata: variacoes.map((v) => [num(v.media, 2), v.ano === ultimoAno && mesesUltimoAno < 12 ? `<br>(ano incompleto: ${mesesUltimoAno} meses)` : ""]),
+    hovertemplate: "%{x}<br><b>%{y:+.1f}%</b><br>média: R$ %{customdata[0]}%{customdata[1]}<extra></extra>",
+  }], layoutBase({
+    bargap: 0.3,
+    xaxis: { type: "category" },
+    yaxis: { ticksuffix: "%", zeroline: true, zerolinewidth: 1 },
+  }), CONFIG_PLOTLY);
+
+  // Tabela
+  preencherTabela("tabela-indicadores", linhas.map((l) => [
+    mesAno(l.mes), num(l.selic), num(l.ipca_12m), num(l.juro_real), num(l.dolar, 4),
+  ]));
+}
+
+selInicio.addEventListener("change", desenharCenario);
+selFim.addEventListener("change", desenharCenario);
+document.getElementById("restaurar").addEventListener("click", () => {
+  selInicio.value = anos[0];
+  selFim.value = anos[anos.length - 1];
+  desenharCenario();
+});
+
+// ---------- Página 2: Seu dinheiro ----------
+const ranking = [...DADOS.ranking].sort((a, b) => a.posicao - b.posicao);
+const evolucao = DADOS.evolucao;
+const INVESTIMENTOS = ["CDI", "Dólar", "Poupança", "Imóveis", "Dinheiro parado"];
+const COR_INVESTIMENTO = {
+  "CDI": "--series-1", "Dólar": "--series-2", "Poupança": "--series-3",
+  "Imóveis": "--series-4", "Dinheiro parado": "--series-5", "Inflação (IPCA)": "--reference",
+};
+let modoEvolucao = "valor_real";
+
+const corGanho = (g) => (g > 0.01 ? cor("--favor") : g < -0.01 ? cor("--contra") : cor("--neutral"));
+
+function montarCartoesDinheiro() {
+  const destaques = [
+    ["CDI", "CDI: ganho real"],
+    ["Imóveis", "Imóveis: ganho real"],
+    ["Dinheiro parado", "Dinheiro parado: ganho real"],
+  ];
+  const caixa = document.getElementById("kpis-dinheiro");
+  caixa.replaceChildren();
+  for (const [nome, titulo] of destaques) {
+    const linha = ranking.find((r) => r.investimento === nome);
+    if (!linha) continue;
+    const div = document.createElement("div");
+    div.className = "kpi";
+    const label = document.createElement("div"); label.className = "label"; label.textContent = titulo;
+    const valor = document.createElement("div"); valor.className = "value"; valor.textContent = `${sinal(linha.ganho_real_pct, 1)}%`;
+    const nota = document.createElement("div"); nota.className = "note"; nota.textContent = `R$ 100 viraram R$ ${num(linha.valor_final)}`;
+    div.append(label, valor, nota);
+    caixa.appendChild(div);
+  }
+  const ipca = ranking.find((r) => r.investimento === "Inflação (IPCA)");
+  if (ipca) {
+    const div = document.createElement("div");
+    div.className = "kpi";
+    const label = document.createElement("div"); label.className = "label"; label.textContent = "Inflação acumulada";
+    const valor = document.createElement("div"); valor.className = "value"; valor.textContent = `${sinal(ipca.valor_final - 100, 1)}%`;
+    const nota = document.createElement("div"); nota.className = "note"; nota.textContent = `o que custava R$ 100 passou a custar R$ ${num(ipca.valor_final)}`;
+    div.append(label, valor, nota);
+    caixa.appendChild(div);
+  }
+}
+
+function desenharDinheiro() {
+  const telaEstreita = document.getElementById("graf-ranking").clientWidth < 620;
+
+  // Ranking: barras deitadas, da maior para a menor
+  Plotly.react("graf-ranking", [{
+    type: "bar", orientation: "h",
+    y: ranking.map((r) => r.investimento), x: ranking.map((r) => r.valor_final),
+    marker: { color: ranking.map((r) => corGanho(r.ganho_real_pct)) },
+    text: ranking.map((r) => telaEstreita
+      ? `R$ ${num(r.valor_final)}`
+      : `R$ ${num(r.valor_final)}  (${r.investimento === "Inflação (IPCA)" ? "referência" : sinal(r.ganho_real_pct, 1) + "% real"})`),
+    textposition: "outside", cliponaxis: false,
+    textfont: { color: cor("--text-primary"), size: 12 },
+    customdata: ranking.map((r) => sinal(r.ganho_real_pct, 2)),
+    hovertemplate: "<b>R$ %{x:.2f}</b><br>%{y}<br>ganho real: %{customdata}%<extra></extra>",
+  }], layoutBase({
+    bargap: 0.35,
+    margin: { l: 120, r: 16, t: 8, b: 36 },
+    xaxis: { tickprefix: "R$ ", range: [0, Math.max(...ranking.map((r) => r.valor_final)) * (telaEstreita ? 1.4 : 1.32)] },
+    yaxis: { autorange: "reversed", gridcolor: "rgba(0,0,0,0)", ticks: "", tickfont: { color: cor("--text-primary"), size: 12 } },
+  }), CONFIG_PLOTLY);
+
+  preencherTabela("tabela-ranking", ranking.map((r) => [
+    r.investimento, `${r.posicao}º`, `R$ ${num(r.valor_final)}`,
+    r.investimento === "Inflação (IPCA)" ? "referência" : `${sinal(r.ganho_real_pct, 2)}%`,
+  ]));
+
+  // Evolução: uma linha por investimento, a inflação como régua cinza tracejada
+  const ordem = [...INVESTIMENTOS, "Inflação (IPCA)"];
+  const tracos = [];
+  const rotulosFinais = [];
+  for (const nome of ordem) {
+    const pontos = evolucao.filter((l) => l.investimento === nome).sort((a, b) => a.mes.localeCompare(b.mes));
+    if (!pontos.length) continue;
+    const ehInflacao = nome === "Inflação (IPCA)";
+    tracos.push({
+      x: pontos.map((p) => p.mes), y: pontos.map((p) => p[modoEvolucao]),
+      name: nome, type: "scatter", mode: "lines",
+      line: { color: cor(COR_INVESTIMENTO[nome]), width: 2, dash: ehInflacao ? "dash" : "solid" },
+      hovertemplate: `R$ %{y:.2f}<extra>${nome}</extra>`,
+    });
+    const ultimo = pontos[pontos.length - 1];
+    rotulosFinais.push({ nome, mes: ultimo.mes, valor: ultimo[modoEvolucao] });
+  }
+
+  // Rótulos no fim de cada linha, afastados quando ficam perto demais
+  const altura = document.getElementById("graf-evolucao").clientHeight || 400;
+  const valores = rotulosFinais.map((r) => r.valor);
+  const faixa = Math.max(...valores, 100) - Math.min(...valores, 100);
+  const distanciaMinima = faixa / (altura / 16);
+  const ordenados = [...rotulosFinais].sort((a, b) => b.valor - a.valor);
+  for (let i = 1; i < ordenados.length; i++) {
+    const limite = ordenados[i - 1].posicao ?? ordenados[i - 1].valor;
+    ordenados[i].posicao = Math.min(ordenados[i].valor, limite - distanciaMinima);
+  }
+  const anotacoes = telaEstreita ? [] : ordenados.map((r) => ({
+    x: r.mes, y: r.posicao ?? r.valor, xanchor: "left", yanchor: "middle", xshift: 6,
+    text: `${r.nome}  ${num(r.valor, 0)}`, showarrow: false,
+    font: { color: cor("--text-primary"), size: 11 },
+  }));
+
+  const real = modoEvolucao === "valor_real";
+  document.getElementById("titulo-evolucao").textContent = real
+    ? "Poder de compra de R$ 100 ao longo do tempo"
+    : "Quanto R$ 100 valiam a cada mês";
+  document.getElementById("sub-evolucao").textContent = real
+    ? "Em reais de maio de 2012, já descontada a inflação. Acima da linha cinza, o investimento ganhou da inflação."
+    : "Em reais da época, sem descontar a inflação. A linha cinza mostra quanto era preciso só para acompanhar os preços.";
+
+  Plotly.react("graf-evolucao", tracos, layoutBase({
+    hovermode: "x unified", showlegend: true,
+    legend: { orientation: "h", y: -0.12, font: { color: cor("--text-secondary"), size: 11 } },
+    margin: { l: 52, r: telaEstreita ? 16 : 150, t: 8, b: 56 },
+    annotations: anotacoes,
+    xaxis: { type: "date", hoverformat: "%m/%Y", range: [tracos[0].x[0], tracos[0].x[tracos[0].x.length - 1]], showspikes: true, spikemode: "across", spikethickness: 1, spikecolor: cor("--axis"), spikedash: "solid" },
+    yaxis: { tickprefix: "R$ ", rangemode: "tozero" },
+  }), CONFIG_PLOTLY);
+}
+
+for (const [id, modo] of [["modo-real", "valor_real"], ["modo-nominal", "valor"]]) {
+  document.getElementById(id).addEventListener("click", () => {
+    modoEvolucao = modo;
+    document.getElementById("modo-real").setAttribute("aria-pressed", String(modo === "valor_real"));
+    document.getElementById("modo-nominal").setAttribute("aria-pressed", String(modo === "valor"));
+    desenharDinheiro();
+  });
+}
+
+// ---------- Abas ----------
+const abas = [
+  { botao: document.getElementById("tab-cenario"), painel: document.getElementById("painel-cenario"), desenhar: desenharCenario },
+  { botao: document.getElementById("tab-dinheiro"), painel: document.getElementById("painel-dinheiro"), desenhar: desenharDinheiro },
+];
+function mostrarAba(indice) {
+  abas.forEach((aba, i) => {
+    const ativa = i === indice;
+    aba.botao.setAttribute("aria-selected", String(ativa));
+    aba.botao.tabIndex = ativa ? 0 : -1;
+    aba.painel.hidden = !ativa;
+  });
+  abas[indice].desenhar(); // desenha depois de aparecer, para os gráficos terem a largura certa
+}
+abas.forEach((aba, i) => {
+  aba.botao.addEventListener("click", () => mostrarAba(i));
+  aba.botao.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      const proxima = (i + (e.key === "ArrowRight" ? 1 : abas.length - 1)) % abas.length;
+      abas[proxima].botao.focus();
+      mostrarAba(proxima);
+    }
+  });
+});
+const abaAtiva = () => abas.findIndex((a) => !a.painel.hidden);
+
+// ---------- Tema claro/escuro ----------
+function redesenhar() { abas[abaAtiva()].desenhar(); }
+document.getElementById("tema").addEventListener("click", () => {
+  const escuroAgora = getComputedStyle(document.documentElement).colorScheme.includes("dark");
+  document.documentElement.dataset.theme = escuroAgora ? "light" : "dark";
+  try { localStorage.setItem("tema", document.documentElement.dataset.theme); } catch (e) {}
+  redesenhar();
+});
+try {
+  const salvo = localStorage.getItem("tema");
+  if (salvo === "light" || salvo === "dark") document.documentElement.dataset.theme = salvo;
+} catch (e) {}
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redesenhar);
+
+// ---------- Início ----------
+const ultimoMes = indicadores[indicadores.length - 1].mes;
+document.getElementById("atualizacao").textContent = `Indicadores até ${mesAno(ultimoMes)}`;
+montarCartoesDinheiro();
+mostrarAba(0);
+</script>
+</body>
+</html>
